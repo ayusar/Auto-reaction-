@@ -7,12 +7,12 @@ import httpx
 from dotenv import load_dotenv
 
 # ── MUST load env first ───────────────────────────────────────────────────────
-load_dotenv("config.env")
+load_dotenv()
 
 from telegram_bot_api import TelegramBotAPI
 from helper import split_emojis, get_chat_ids
 
-IS_CLONE_BOT = os.getenv("IS_CLONE_BOT", "false")
+IS_CLONE_BOT = os.getenv("IS_CLONE_BOT", "false").lower() == "true"
 
 if IS_CLONE_BOT:
     from bot_handler_clone import on_update, on_callback_query
