@@ -1,13 +1,13 @@
-# © [2026] Malith-Rukshan. All rights reserved.
-
 import os
 import asyncio
 import httpx
+from threading import Thread
+from http.server import HTTPServer, BaseHTTPRequestHandler
 
 from dotenv import load_dotenv
 
 # ── MUST load env first ───────────────────────────────────────────────────────
-load_dotenv()
+load_dotenv("config.env")
 
 from telegram_bot_api import TelegramBotAPI
 from helper import split_emojis, get_chat_ids
@@ -28,6 +28,7 @@ OWNER_ID          = os.getenv("OWNER_ID", "")
 MAIN_BOT_USERNAME = os.getenv("MAIN_BOT_USERNAME", "")
 MONGO_URI         = os.getenv("MONGO_URI", "")
 LOG_GROUP_ID      = os.getenv("LOG_GROUP_ID", "")
+PORT              = int(os.getenv("PORT", "8000"))
 
 reactions        = split_emojis(EMOJI_LIST)
 restricted_chats = get_chat_ids(RESTRICTED_CHATS)
@@ -35,6 +36,21 @@ bot_api          = TelegramBotAPI(BOT_TOKEN)
 broadcast_state  = {"waiting": False}
 
 
+# ── Health check server for Render ───────────────────────────────────────────
+class HealthHandler(BaseHTTPRequestHandler):
+    def do_GET(self):
+        self.send_response(200)
+        self.end_headers()
+        self.wfile.write(b"OK")
+    def log_message(self, format, *args):
+        pass
+
+def start_health_server():
+    server = HTTPServer(("0.0.0.0", PORT), HealthHandler)
+    server.serve_forever()
+
+
+# ── Bot polling ───────────────────────────────────────────────────────────────
 async def delete_webhook():
     try:
         async with httpx.AsyncClient(timeout=10) as client:
@@ -53,7 +69,10 @@ async def get_updates(offset=None) -> list:
         params["offset"] = offset
     try:
         async with httpx.AsyncClient(timeout=35) as client:
-            r    = await client.get(f"https://api.telegram.org/bot{BOT_TOKEN}/getUpdates", params=params)
+            r    = await client.get(
+                f"https://api.telegram.org/bot{BOT_TOKEN}/getUpdates",
+                params=params,
+            )
             data = r.json()
             if data.get("ok"):
                 return data["result"]
@@ -118,4 +137,6 @@ if __name__ == "__main__":
         f"Storage: {'MongoDB' if MONGO_URI else 'In-Memory'} | "
         f"Log Group: {'Yes' if LOG_GROUP_ID else 'No'}"
     )
+    Thread(target=start_health_server, daemon=True).start()
+    print(f"[INFO] Health server running on port {PORT}")
     asyncio.run(polling_loop())
