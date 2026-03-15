@@ -1,4 +1,3 @@
-# ── Stage 1: Builder ──────────────────────────────────────────
 FROM python:3.12-slim AS builder
 
 WORKDIR /app
@@ -14,7 +13,6 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir --prefix=/install -r requirements.txt
 
 
-# ── Stage 2: Production ───────────────────────────────────────
 FROM python:3.12-slim
 
 LABEL maintainer="RoyalityBots"
@@ -40,17 +38,4 @@ ENV PORT=8000 \
     PYTHONDONTWRITEBYTECODE=1 \
     PYTHONIOENCODING=utf-8
 
-HEALTHCHECK --interval=30s --timeout=10s --start-period=15s --retries=3 \
-    CMD python3 -c \
-        "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')" \
-    || exit 1
-
-CMD ["gunicorn", "app:app", \
-     "--bind", "0.0.0.0:8000", \
-     "--workers", "2", \
-     "--threads", "4", \
-     "--timeout", "30", \
-     "--keep-alive", "5", \
-     "--access-logfile", "-", \
-     "--error-logfile", "-", \
-     "--log-level", "info"]
+CMD ["python", "app.py"]
