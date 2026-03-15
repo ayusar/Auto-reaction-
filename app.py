@@ -12,7 +12,7 @@ load_dotenv("config.env")
 from telegram_bot_api import TelegramBotAPI
 from helper import split_emojis, get_chat_ids
 
-IS_CLONE_BOT = os.getenv("IS_CLONE_BOT", "false").lower() == "true"
+IS_CLONE_BOT = os.getenv("IS_CLONE_BOT", "false")
 
 if IS_CLONE_BOT:
     from bot_handler_clone import on_update, on_callback_query
