@@ -1,0 +1,13 @@
+{
+    "pythonVersion": "3.12",
+    "pythonPlatform": "Linux",
+    "typeCheckingMode": "basic",
+    "reportMissingModuleSource": "none",
+    "reportMissingImports": "warning",
+    "venvPath": ".",
+    "venv": ".venv",
+    "exclude": [
+        "**/__pycache__",
+        "**/*.pyc"
+    ]
+}
